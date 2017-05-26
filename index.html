@@ -1,0 +1,331 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width"/>
+<meta name="description" content="The Loman Search">
+<meta name="author" content="Alan Ma">
+<title>The Loman Search</title>
+
+<style>
+	body {
+		margin: 0;
+		width: 100%;
+		height: 100%;
+	}
+	#new_canvas {
+		z-index: 3;
+		position: relative;
+		margin-left: 250px;
+	}
+	#info {
+		width: 250px;
+		height: 100%;
+		position: absolute;
+		padding: 10px 15px;
+		top: 0;
+		font-family: sans-serif;
+		box-sizing: border-box;
+	}
+	ul {
+		margin: 0;
+	}
+	li {
+		margin-top: 8px;
+	}
+</style>
+
+<div id="info">
+	<h1>The Loman Search</h1>
+	<i>A passion project by Alan Ma</i>
+	<p>In this journey of life, try to find everything on your list!</p>
+	<br>
+	<br>
+	<p>You are at: <span id="coordinates">(50, 50)</span></p>
+	<br>
+	<br>
+	<b>Goals</b>
+	<ul id="goals"></ul>
+</div>
+<canvas id="new_canvas" width="1080px" height="720px"></canvas>
+
+<script>
+	function getRandomInt(min, max) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(Math.random() * (max - min)) + min;
+	}
+
+	var canvas = document.getElementById("new_canvas");
+	var ctx = canvas.getContext("2d");
+	ctx.canvas.width  = window.innerWidth-250;
+	ctx.canvas.height = window.innerHeight;
+
+	var ball = {};
+	ball.x = canvas.width/2;
+	ball.y = canvas.height/2;
+	ball.radius = 7;
+	ball.wantUp = false;
+	ball.wantDown = false;
+	ball.wantLeft = false;
+	ball.wantRight = false;
+	ball.hMovement = 0;
+	ball.vMovement = 0;
+	ball.speed = 0.5 + Math.random();
+	ball.strength = 15 + Math.floor(Math.random()*15);
+	ball.found = 0;
+
+	var careerX = Math.floor(Math.random()*100);
+	var careerY = Math.floor(Math.random()*100);
+
+	var goals = [
+		{
+			x: careerX,
+			y: careerY,
+			size: 5,
+			name: "a stable career",
+			id: "job"
+		},
+		{
+			x: 48,
+			y: 3,
+			size: 5,
+			name: "your wits",
+			id: "wits"
+		},
+		{
+			x: 11,
+			y: 1,
+			size: 5,
+			name: "Oliver's fountain pen",
+			id: "pen"
+		},
+		{
+			x: 28,
+			y: 7,
+			size: 5,
+			name: "Biff's football",
+			id: "football"
+		},
+		{
+			x: 6,
+			y: 66,
+			size: 5,
+			name: "good grades",
+			id: "grades"
+		},
+		{
+			x: 72,
+			y: 66,
+			size: 5,
+			name: "a diamond mine",
+			id: "mine"
+		},
+		{
+			x: 41,
+			y: 80,
+			size: 5,
+			name: "a functioning fridge",
+			id: "fridge"
+		},
+		{
+			x: 74,
+			y: 50,
+			size: 5,
+			name: "a business plan",
+			id: "plan"
+		},
+		{
+			x: 46,
+			y: 68,
+			size: 5,
+			name: "a car",
+			id: "car"
+		},
+		{
+			x: 83,
+			y: 51,
+			size: 5,
+			name: "stockings",
+			id: "stockings"
+		},
+		{
+			x: 73,
+			y: 76,
+			size: 5,
+			name: "a wire recorder",
+			id: "recorder"
+		},
+		{
+			x: 23,
+			y: 42,
+			size: 5,
+			name: "seeds",
+			id: "seeds"
+		},
+		{
+			x: 45,
+			y: 17,
+			size: 5,
+			name: "properties in Alaska",
+			id: "alaska"
+		},
+		{
+			x: 79,
+			y: 88,
+			size: 5,
+			name: "summer school",
+			id: "school"
+		},
+		{
+			x: 85,
+			y: 3,
+			size: 5,
+			name: "freedom",
+			id: "freedom"
+		}
+	]
+
+	var shown = [0];
+	while (shown.length < 5) {
+		var temp = Math.floor(Math.random()*15);
+		if (shown.indexOf(temp) == -1) {
+			shown.push(temp);
+		}
+	}
+	for (i=0; i<5; i++) {
+		var node = document.createElement("LI");
+		node.setAttribute("id", goals[shown[i]].id);
+		var textnode = document.createTextNode(goals[shown[i]].name);
+		node.appendChild(textnode);
+		document.getElementById("goals").appendChild(node);
+	}
+
+	document.addEventListener('keydown', function(event) {
+		if (event.code == "KeyW" || event.code == "ArrowUp") {
+			ball.vMovement = -1;
+			ball.wantUp = true;
+		}
+		if (event.code == "KeyS" || event.code == "ArrowDown") {
+			ball.vMovement = 1;
+			ball.wantDown = true;
+		}
+		if (event.code == "KeyD" || event.code == "ArrowRight") {
+			ball.hMovement = 1;
+			ball.wantRight = true;
+		}
+		if (event.code == "KeyA" || event.code == "ArrowLeft") {
+			ball.hMovement = -1;
+			ball.wantLeft = true;
+		}
+	}, false);
+
+	document.addEventListener('keyup', function(event) {
+		if (event.code == "KeyW" || event.code == "ArrowUp") {
+			ball.wantUp = false;
+		}
+		if (event.code == "KeyS" || event.code == "ArrowDown") {
+			ball.wantDown = false;
+		}
+		if (event.code == "KeyA" || event.code == "ArrowLeft") {
+			ball.wantLeft = false;
+		}
+		if (event.code == "KeyD" || event.code == "ArrowRight") {
+			ball.wantRight = false;
+		}
+	}, false);
+
+	setInterval(function() {
+		ctx.fillStyle = "black";
+		ctx.canvas.width  = window.innerWidth-250;
+		ctx.canvas.height = window.innerHeight;
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+		if (ball.wantRight && !ball.wantLeft) {
+			ball.hMovement = 1;
+		}
+		if (!ball.wantRight && ball.wantLeft) {
+			ball.hMovement = -1;
+		}
+		if (!ball.wantLeft && !ball.wantRight) {
+			ball.hMovement = 0;
+		}
+
+		if (ball.wantUp && !ball.wantDown) {
+			ball.vMovement = -1;
+		}
+		if (!ball.wantUp && ball.wantDown) {
+			ball.vMovement = 1;
+		}
+		if (!ball.wantUp && !ball.wantDown) {
+			ball.vMovement = 0;
+		}
+
+		ball.x += ball.hMovement * ball.speed;
+		ball.y += ball.vMovement * ball.speed;
+
+		if (ball.x < 0) {
+			ball.x = 0;
+		} else if (ball.x > canvas.width) {
+			ball.x = canvas.width;
+		}
+		if (ball.y < 0) {
+			ball.y = 0;
+		} else if (ball.y > canvas.height) {
+			ball.x = canvas.height;
+		}
+
+		for (i=0; i<goals.length; i++) {
+			if (Math.abs(goals[i].x/100*canvas.width + (goals[i].size)/2 - ball.x) < ball.radius + goals[i].size/2 + 1) {
+				if (Math.abs(goals[i].y/100*canvas.height + (goals[i].size)/2 - ball.y) < ball.radius + goals[i].size/2 + 1) {
+					if (document.getElementById(goals[i].id)) {
+						document.getElementById(goals[i].id).style.color = "#1FC812";
+						ball.found += 1;
+					}				
+					alert("You have found " + goals[i].name + " at (" + goals[i].x.toString() + "," + goals[i].y.toString() + ")!");
+					goals.splice(i, 1);
+					ball.wantUp = false;
+					ball.wantDown = false;
+					ball.wantLeft = false;
+					ball.wantRight = false;
+				}
+			}
+		}
+
+		if (ball.found == 5) {
+			alert("Congratulations! You have succeeded!! \n Your character's speed was " + (Math.round(ball.speed*1000)/10).toString() + ". The average is 100.\n Your character's vision was " + (Math.round(ball.strength*100)/10).toString() + ". The average is 225.");
+		}
+
+		document.getElementById("coordinates").innerHTML = "(" + Math.floor(ball.x/canvas.width*100).toString() + ", " + Math.floor(ball.y/canvas.height*100).toString() + ")";
+
+		ctx.beginPath();
+		for (i=0; i<ball.strength; i++) {
+			ctx.fillStyle = "rgba(255, 255, 255, " + (1-i/ball.strength).toString() + ")";
+			ctx.arc(ball.x, ball.y, ball.radius + 2*i, 0, 2*Math.PI, true);
+			ctx.fill();
+		}
+
+		ctx.fillStyle = "black";
+		for (i=0; i<goals.length; i++) {
+			ctx.beginPath();
+			ctx.fillRect(goals[i].x/100*canvas.width, goals[i].y/100*canvas.height, goals[i].size, goals[i].size);
+		}
+
+		for (i=0; i<10; i++) {
+			ctx.fillStyle = "white";
+			ctx.font = "20px Arial";
+			ctx.fillText((i*10).toString(), i/10*canvas.width + 3, 20);
+		}
+
+		for (i=0; i<10; i++) {
+			ctx.fillStyle = "white";
+			ctx.font = "20px Arial";
+			ctx.fillText((i*10).toString(), 3, i/10*canvas.height);
+		}
+
+		ctx.fillStyle = "#4FEB2F";
+		ctx.beginPath();
+		ctx.arc(ball.x, ball.y, ball.radius, 0, 2*Math.PI, true);
+		ctx.fill();
+
+	}, 20);
+
+</script>
+
